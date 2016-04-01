@@ -11,16 +11,16 @@ using std::queue;
 using std::cin;
 using std::cout;
 
-class Aho
+template <class T> class Aho
 {
 private:
     struct Node
     {
         int suffix_link = -1;
         int parent;
-        map <char, int> next;
+        map <T, int> next;
         int terminal_pattern = -1; //who ends here
-        char last_char; //char to this node
+        T last_char; //char to this node
     };
     int ROOT = 0;
     int cur_node;
@@ -28,29 +28,29 @@ private:
     vector<Node> trie;
     vector <vector <int> > numeric_patterns;
     int NewNode();
-    vector <int> AddAllPatterns(vector<string> const & patterns);
-    int AddPattern(const string & pattern);
+    vector <int> AddAllPatterns(vector <vector<T> > const & patterns);
+    int AddPattern(const vector<T> & pattern);
     void BuildSuffixLinks();
     void BuildSuffixLink(int);
-    int Go(int, char);
+    int Go(int, T);
 public:
-    Aho(vector <vector <string> > const & patterns);
+    Aho(vector <vector <vector<T> > > const & patterns);
     vector <vector <int> > & getNumeric();
-    int processNextChar(char);
+    int processNextChar(T);
     void reset();
 };
 
-int Aho::NewNode()
+template <class T> int Aho<T>::NewNode()
 {
     trie.push_back(Node());
     return trie.size() - 1;
 }
 
-vector <int> Aho::AddAllPatterns(vector<string> const & patterns)
+template <class T> vector <int> Aho<T>::AddAllPatterns(vector <vector<T> > const & patterns)
 {
     int sum_length = 1;
     for (int i = 0; i < patterns.size(); ++i)
-        sum_length += patterns[i].length();
+        sum_length += patterns[i].size();
     trie.reserve(sum_length);
     NewNode();
     vector <int> numbers;
@@ -59,12 +59,12 @@ vector <int> Aho::AddAllPatterns(vector<string> const & patterns)
     return numbers;
 }
 
-int Aho::AddPattern(const string & pattern)
+template <class T> int Aho<T>::AddPattern(const vector<T> & pattern)
 {
     int cur_node = ROOT;
-    for (int i = 0; i < pattern.length(); ++i)
+    for (int i = 0; i < pattern.size(); ++i)
     {
-        char c = pattern[i];
+        T c = pattern[i];
         if (trie[cur_node].next.count(c) != 0)
             cur_node = trie[cur_node].next[c];
         else
@@ -86,9 +86,9 @@ int Aho::AddPattern(const string & pattern)
     return trie[cur_node].terminal_pattern;
 }
 
-void Aho::BuildSuffixLinks()
+template <class T> void Aho<T>::BuildSuffixLinks()
 {
-    queue<int> q;
+    queue <int> q;
     q.push(ROOT);
     while(!q.empty())
     {
@@ -96,7 +96,7 @@ void Aho::BuildSuffixLinks()
         q.pop();
         BuildSuffixLink(now);
 
-        for (map<char, int>::iterator iter = trie[now].next.begin();
+        for (typename map <T, int>::iterator iter = trie[now].next.begin();
                 iter != trie[now].next.end();
                 ++iter)
         {
@@ -105,7 +105,7 @@ void Aho::BuildSuffixLinks()
     }
 }
 
-void Aho::BuildSuffixLink(int node)
+template <class T> void Aho<T>::BuildSuffixLink(int node)
 {
     if (node == ROOT || trie[node].parent == ROOT)
     {
@@ -118,7 +118,7 @@ void Aho::BuildSuffixLink(int node)
     }
 }
 
-int Aho::Go(int node, char c)
+template <class T> int Aho<T>::Go(int node, T c)
 {
     if (trie[node].next.count(c) != 0)
       return trie[node].next[c];
@@ -127,7 +127,7 @@ int Aho::Go(int node, char c)
     return Go(trie[node].suffix_link, c);
 }
 
-Aho::Aho(vector <vector <string> > const & patterns)
+template <class T> Aho<T>::Aho(vector <vector <vector<T> > > const & patterns)
 {
     for (int i = 0; i < patterns.size(); ++i)
     {
@@ -137,15 +137,20 @@ Aho::Aho(vector <vector <string> > const & patterns)
     cur_node = ROOT;
 }
 
-int Aho::processNextChar(char c)
+template <class T> int Aho<T>::processNextChar(T c)
 {
     cur_node = Go(cur_node, c);
     return trie[cur_node].terminal_pattern;
 }
 
-void Aho::reset()
+template <class T> void Aho<T>::reset()
 {
     cur_node = ROOT;
+}
+
+template <class T> vector <vector <int> > & Aho<T>::getNumeric()
+{
+    return numeric_patterns;
 }
 
 int main()
@@ -162,25 +167,53 @@ int main()
 
     int number, k, l;
     cin >> number >> k >> l;
-    vector <vector <string> > patterns(number);
+    vector <vector <vector <char> > > patterns_str(number);
     for (int i = 0; i < number; ++i)
     {
         for (int j = 0; j < k; ++j)
         {
-            string row;
-            cin >> row;
-            patterns[i].push_back(row);
+            vector <char> row;
+            for (int h = 0; h < l; ++h)
+            {
+                char c;
+                cin >> c;
+                row.push_back(c);
+            }
+            patterns_str[i].push_back(row);
         }
     }
-    Aho aho(patterns);
-    //vector <string> result(m); //_m_ sic!
+    Aho<char> aho_1(patterns_str);
+    vector <vector <vector <int>>> patterns_int; 
+    patterns_int.push_back(aho_1.getNumeric());
+    Aho<int> aho_2(patterns_int);
+
+    vector <string> result(m); //_m_ sic!
     for (int i = 0; i < n; ++i)
     {
-        for (int j = 0; j < matrix[i].length(); ++j)
-            cout << aho.processNextChar(matrix[i][j]) << ' ';
-            //result[j] += aho.processNextChar(matrix[i][j]);
-        cout << std::endl;
-        aho.reset();
+        for (int j = 0; j < m; ++j)
+            //cout << aho.processNextChar(matrix[i][j]) << ' ';
+            result[j] += aho_1.processNextChar(matrix[i][j]);
+        //cout << std::endl;
+        aho_1.reset();
     }
+
+    vector<int> counts(number, 0);
+    for (int i = 0; i < m; ++i)
+    {
+        for (int j = 0; j < n; ++j)
+        {
+            int pattern_id = aho_2.processNextChar(result[i][j]);
+            if (pattern_id != -1)
+                counts[pattern_id]++;
+        }
+        aho_2.reset();
+    }
+    
+    vector<int> matrix_index = aho_2.getNumeric()[0];
+    for (int i = 0; i < matrix_index.size(); ++i) //size must be equal to 'number'
+    {
+        cout << counts[matrix_index[i]] << ' ';
+    }
+    cout << std::endl;
     return 0;
 }
