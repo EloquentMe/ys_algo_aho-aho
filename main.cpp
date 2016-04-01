@@ -19,7 +19,7 @@ private:
         int suffix_link = -1;
         int parent;
         map <T, int> next;
-        int terminal_pattern = -1; //who ends here
+        int terminal_pattern = -1; //what ends here, -1 if nothing
         T last_char; //char to this node
     };
     int ROOT = 0;
@@ -46,7 +46,8 @@ template <class T> int Aho<T>::NewNode()
     return trie.size() - 1;
 }
 
-template <class T> vector <int> Aho<T>::AddAllPatterns(vector <vector<T> > const & patterns)
+template <class T>
+vector <int> Aho<T>::AddAllPatterns(vector <vector<T> > const & patterns)
 {
     int sum_length = 1;
     for (int i = 0; i < patterns.size(); ++i)
@@ -121,9 +122,9 @@ template <class T> void Aho<T>::BuildSuffixLink(int node)
 template <class T> int Aho<T>::Go(int node, T c)
 {
     if (trie[node].next.count(c) != 0)
-      return trie[node].next[c];
+        return trie[node].next[c];
     if (node == ROOT)
-      return ROOT;
+        return ROOT;
     return Go(trie[node].suffix_link, c);
 }
 
@@ -183,17 +184,17 @@ int main()
         }
     }
     Aho<char> aho_1(patterns_str);
-    vector <vector <vector <int>>> patterns_int; 
+
+    // Aho reduces the dimension of pattern set.
+    vector <vector <vector <int> > > patterns_int;
     patterns_int.push_back(aho_1.getNumeric());
     Aho<int> aho_2(patterns_int);
 
-    vector <string> result(m); //_m_ sic!
+    vector <string> result(m);
     for (int i = 0; i < n; ++i)
     {
         for (int j = 0; j < m; ++j)
-            //cout << aho.processNextChar(matrix[i][j]) << ' ';
             result[j] += aho_1.processNextChar(matrix[i][j]);
-        //cout << std::endl;
         aho_1.reset();
     }
 
@@ -208,9 +209,9 @@ int main()
         }
         aho_2.reset();
     }
-    
+
     vector<int> matrix_index = aho_2.getNumeric()[0];
-    for (int i = 0; i < matrix_index.size(); ++i) //size must be equal to 'number'
+    for (int i = 0; i < number; ++i)
     {
         cout << counts[matrix_index[i]] << ' ';
     }
